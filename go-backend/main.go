@@ -8,7 +8,7 @@ import (
 
     "github.com/gorilla/mux"
 
-
+    "go-backend/database"
     "go-backend/handlers"
 
 )
@@ -16,14 +16,13 @@ import (
 func main() {
     // 1. Initialize the database connection and run migrations
     // Ensure all models are passed to AutoMigrate
-    // database.InitializeDatabase(&models.Product{})
+    database.InitializeDatabase(&database.Card{})
 
     // 2. Setup the router
     router := mux.NewRouter()
 
     // 3. Define the routes, linking to handlers
-    router.HandleFunc("/test", handlers.GetTest).Methods("GET")
-    // router.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
+    router.HandleFunc("/api/cards/search", handlers.SearchCard).Methods("GET")    // router.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
     // router.HandleFunc("/products/{id}", handlers.UpdateProduct).Methods("PUT") // <-- NEW ROUTE
     // router.HandleFunc("/products/{id}", handlers.DeleteProduct).Methods("DELETE")
     
