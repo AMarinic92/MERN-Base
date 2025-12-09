@@ -6,7 +6,7 @@ export default function MtgCard({data}){
         if(!data) return;
         const images = data?.ImageURIs ? JSON.parse(data?.ImageURIs) : JSON.parse(data?.CardFaces);
         
-        return data?.ImageURIs ? [images?.normal] : [image?.[0]?.normal, image?.[1]?.normal];
+        return data?.ImageURIs ? [images?.normal] : [image?.[0]?.ImageURIs?.normal, image?.[1]?.ImageURIs.normal];
     }, [data])
     if(!data) return;
     console.log(data)

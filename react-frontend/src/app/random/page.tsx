@@ -29,7 +29,7 @@ export default function Inbox() {
         <h1>Random</h1>
         <Button onClick={() =>setGetCard(true)}>Get Random</Button>
         <MtgCard data={data?.card}/>
-        <Button onClick={() =>setGetSimilar(true)}>Get Similar</Button>
+        <Button className={`${data ? '' : 'hidden'}`}onClick={() =>setGetSimilar(true)}>Get Similar</Button>
         </div>
         
       </main>

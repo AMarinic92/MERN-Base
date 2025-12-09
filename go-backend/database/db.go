@@ -110,7 +110,7 @@ func SearchCardByNameFuzzy(name string) ([]Card, error) {
 
 func GetRandomCard() (Card, error) {
 	var card Card
-	result := DB.Where("lang = ?", "en").Order("RANDOM()").First(&card)
+	result := DB.Raw("SELECT * FROM cards TABLESAMPLE BERNOULLI(1) WHERE lang = 'en' LIMIT 1").Scan(&card)
 	return card, result.Error
 }
 
