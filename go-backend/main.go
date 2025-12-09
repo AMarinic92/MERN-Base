@@ -5,39 +5,60 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/gorilla/mux"
+	"sync"
 
 	"go-backend/database"
 	"go-backend/handlers"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
 	// 1. Initialize the database connection and run migrations
-	// Ensure all models are passed to AutoMigrate
 	database.InitializeDatabase(&database.Card{})
 
-	// 2. Setup the router
-	router := mux.NewRouter()
+	// 2. Check if we should prime the database in the background
+	if len(os.Args) > 1 && os.Args[1] == "prime" {
+		filePath := "../../all-cards.json"
+		if len(os.Args) > 2 {
+			filePath = os.Args[2]
+		}
 
-	// 3. Define the routes, linking to handlers
-	router.HandleFunc("/api/cards/search", handlers.SearchCard).Methods("GET") // router.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
-	router.HandleFunc("/api/cards/rand", handlers.GetRndCard).Methods("GET")   // router.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
+		// Start priming in a goroutine
+		var wg sync.WaitGroup
+		wg.Add(1)
 
-	// router.HandleFunc("/products/{id}", handlers.UpdateProduct).Methods("PUT") // <-- NEW ROUTE
-	// router.HandleFunc("/products/{id}", handlers.DeleteProduct).Methods("DELETE")
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting database priming in background...")
 
-	// Add OPTIONS handler for all paths to handle CORS preflight
-	router.PathPrefix("/").HandlerFunc(handlers.OptionsHandler).Methods("OPTIONS")
+			file, err := os.Open(filePath)
+			if err != nil {
+				log.Printf("Failed to open JSON file '%s': %v", filePath, err)
+				return
+			}
+			defer file.Close()
 
-	// 4. Start the server
-	port := "8081"
-	fmt.Printf("Server listening on http://localhost:%s\n", port)
+			if err := database.PrimeDatabase(file); err != nil {
+				log.Printf("Failed to prime database: %v", err)
+				return
+			}
 
-	// Create necessary directories if needed (for SQLite in this case)
-	if err := os.MkdirAll("./", 0755); err != nil {
-		log.Fatalf("Could not create database directory: %v", err)
+			fmt.Println("Database primed successfully!")
+		}()
+
 	}
 
+	// 3. Setup the router
+	router := mux.NewRouter()
+
+	// 4. Define the routes
+	router.HandleFunc("/api/cards/search", handlers.SearchCard).Methods("GET")
+	router.HandleFunc("/api/cards/rand", handlers.GetRndCard).Methods("GET")
+	router.PathPrefix("/").HandlerFunc(handlers.OptionsHandler).Methods("OPTIONS")
+
+	// 5. Start the server
+	port := "8081"
+	fmt.Printf("Server listening on http://localhost:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }

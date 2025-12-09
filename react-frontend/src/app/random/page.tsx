@@ -18,7 +18,7 @@ export default function Inbox() {
         <div>
         <h1>Random</h1>
         <Button onClick={() =>setGetCard(true)}>Get Random</Button>
-                <MtgCard data={data.card}/>
+        <MtgCard data={data?.card}/>
 
         </div>
         
