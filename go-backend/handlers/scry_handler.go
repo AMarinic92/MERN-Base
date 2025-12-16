@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-backend/database"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -104,6 +105,8 @@ func GetRndCard(w http.ResponseWriter, r *http.Request) {
 
 func GetSimilarCards(w http.ResponseWriter, r *http.Request) {
 	// Read the raw body
+	log.Println("=== GetSimilarCards HANDLER CALLED ===")
+	log.Printf("Method: %s, Path: %s", r.Method, r.URL.Path)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -113,17 +116,18 @@ func GetSimilarCards(w http.ResponseWriter, r *http.Request) {
 
 	// If you're expecting JSON, unmarshal it into a struct
 	var requestData struct {
-		SearchTerms []string `json:"search_terms"`
+		OracleTexts []string `json:"oracle_texts"`
 	}
 
 	err = json.Unmarshal(body, &requestData)
+	log.Panicln(requestData.OracleTexts)
 	if err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	// Use the data
-	cards, err := database.SearchFuzzyOracleText(requestData.SearchTerms)
+	cards, err := database.SearchFuzzyOracleText(requestData.OracleTexts)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return

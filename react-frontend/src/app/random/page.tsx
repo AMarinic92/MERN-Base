@@ -10,18 +10,37 @@ export default function Inbox() {
     const [getSimilar, setGetSimilar] = useState(false);
 
   const {data} = useQuery({ queryKey: ['rand-card'], queryFn: async () =>{
-      const response = await API.get("/cards/rand");
+      try{
+        const response = await API.get("/cards/rand");
       setGetCard(false);
-      return response
+      return response;
+    } catch (err){
+      setGetCard(false);
+      return err;
+    }
+
   }, enabled: getCard });
 
-    const {data: similar} = useQuery({ queryKey: ['rand-card'], queryFn: async () =>{
-      const response = await API.post("/cards/similar", data?.OracleText.split(","));
-      setGetCard(false);
-      setGetSimilar(false)
-      return response
-  }, enabled: data && getSimilar});
-  console.log(similar)
+const {data: similar} = useQuery({ 
+  queryKey: ['sim-card'], 
+  queryFn: async () => {
+    const payload = {
+      oracle_texts: data?.card?.OracleText?.split("\n") || []
+    };
+
+    console.log(data,payload, JSON.stringify(payload))
+    try{
+      const response = await API.post("/cards/similar", payload);
+      setGetSimilar(false);
+      return response;
+    }catch (err){
+      setGetSimilar(false);
+      return err
+    }
+
+  }, 
+  enabled: (data && getSimilar)
+});
   return (
     <div className="flex min-h-screen items-center justify-center  font-sans dark:bg-black">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">

@@ -120,7 +120,7 @@ func SearchFuzzyOracleText(text []string) ([]Card, error) {
 
 	for _, val := range text {
 		var cards []Card
-		result := DB.Where("oracle_text ILIKE ?", "%"+val+"%").Find(&cards)
+		result := DB.Where("oracle_text ILIKE ?", "%"+val+"%").Find(&cards).Limit(50)
 		if result.Error != nil {
 			lastErr = result.Error
 			continue

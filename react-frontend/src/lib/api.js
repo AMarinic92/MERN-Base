@@ -1,5 +1,4 @@
 // api.js
-
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
 class API {
@@ -113,23 +112,3 @@ class API {
 }
 
 export default API;
-
-// Example usage:
-/*
-import API from './api';
-
-// Get random card
-const randomCard = await API.get('/cards/rand');
-
-// Search for a card with query params
-const searchResult = await API.get('/cards/search', { name: 'Lightning Bolt' });
-
-// POST example (for future endpoints)
-const newCard = await API.post('/cards', { name: 'Black Lotus', ... });
-
-// PUT example
-const updated = await API.put('/cards/123', { name: 'Updated Name' });
-
-// DELETE example
-await API.delete('/cards/123');
-*/

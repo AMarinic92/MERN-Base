@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Go Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/go-backend",
+            "args": [],
+            "env": {},
+            "showLog": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Next.js Frontend",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["dev"],
+            "cwd": "${workspaceFolder}/react-frontend",
+            "port": 3000,
+            "console": "integratedTerminal",
+            "serverReadyAction": {
+                "pattern": "started server on .+, url: (https?://.+)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug Full Stack",
+            "configurations": ["Debug Go Server", "Debug Next.js Frontend"],
+            "stopAll": true
+        }
+    ]
+}

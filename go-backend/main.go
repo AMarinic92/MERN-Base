@@ -11,6 +11,7 @@ import (
 	"go-backend/handlers"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -58,8 +59,19 @@ func main() {
 	router.HandleFunc("/api/cards/similar", handlers.GetSimilarCards).Methods("POST")
 	router.PathPrefix("/").HandlerFunc(handlers.OptionsHandler).Methods("OPTIONS")
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // For development - allow all origins
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+		Debug:            true, // Enable debug mode to see CORS logs
+	})
+
+	// Wrap router with CORS middleware
+	handler := c.Handler(router)
+
 	// 5. Start the server
 	port := "8081"
 	fmt.Printf("Server listening on http://localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
