@@ -39,5 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-*/vscode/*
+/go-backend/__debug*
+../vscode/*
