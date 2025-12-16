@@ -13,16 +13,16 @@ export default function MtgCard({data}){
     if(!data) return;
 
     return(
-        <div className={`${getStyle(data?.Colors)} min-h-96 min-w-48 text-6xl p-3.5 mt-2`}>
+        <div className={`min-h-96 min-w-48 max-w-fit max-h-fit text-6xl p-3.5 mt-2`}>
             <div className="m-4">
                 {data?.Name}
             </div>
             <div>
             {imageUri?.map((uri,i) =>{
-                            return (<div id={data?.Name+i} className="mb-3"><Image 
+                            return (<div key={data?.Name+i} className="mb-3"><Image 
                                 src={uri}
                                 width={500}
-                                height={500}
+                                height={5000.}
                                 preload={true}
                                 alt="Picture of the author"
                             /></div>)}

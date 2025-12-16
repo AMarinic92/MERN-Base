@@ -114,13 +114,23 @@ func GetRandomCard() (Card, error) {
 	return card, result.Error
 }
 
-func SearchFuzzyOracleText(text []string) ([]Card, error) {
+func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
 	var out []Card
 	var lastErr error
 
 	for _, val := range text {
 		var cards []Card
-		result := DB.Where("oracle_text ILIKE ?", "%"+val+"%").Find(&cards).Limit(50)
+
+		DB.Exec("SELECT set_limit(0.3)")
+
+		// Query with similarity matching
+		result := DB.Not("name = ?", name).
+			Distinct("name").
+			Where("oracle_text % ?", val).
+			Order(gorm.Expr("similarity(oracle_text, ?) DESC", val)). // Use gorm.Expr
+			Limit(50).
+			Find(&cards)
+		// result := DB.Not("name = ?", name).Distinct("name").Where("oracle_text ILIKE ?", "%"+val+"%").Limit(50).Find(&cards)
 		if result.Error != nil {
 			lastErr = result.Error
 			continue

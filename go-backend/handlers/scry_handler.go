@@ -116,18 +116,18 @@ func GetSimilarCards(w http.ResponseWriter, r *http.Request) {
 
 	// If you're expecting JSON, unmarshal it into a struct
 	var requestData struct {
+		Name        string   `json:"name"`
 		OracleTexts []string `json:"oracle_texts"`
 	}
 
 	err = json.Unmarshal(body, &requestData)
-	log.Panicln(requestData.OracleTexts)
 	if err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	// Use the data
-	cards, err := database.SearchFuzzyOracleText(requestData.OracleTexts)
+	cards, err := database.SearchFuzzyOracleText(requestData.Name, requestData.OracleTexts)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return

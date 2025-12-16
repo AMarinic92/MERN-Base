@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 />
                 
               </div>
-              <div className="border-8 border-blue-500 p-4">
+              <div className="flex flex-col w-full flex-wrap border-8 border-blue-500 p-4">
                 {children}
               </div>
             </main>

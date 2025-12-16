@@ -13,6 +13,7 @@ export default function Inbox() {
       try{
         const response = await API.get("/cards/rand");
       setGetCard(false);
+      
       return response;
     } catch (err){
       setGetCard(false);
@@ -25,6 +26,7 @@ const {data: similar} = useQuery({
   queryKey: ['sim-card'], 
   queryFn: async () => {
     const payload = {
+      name: data?.card?.Name,
       oracle_texts: data?.card?.OracleText?.split("\n") || []
     };
 
@@ -39,8 +41,9 @@ const {data: similar} = useQuery({
     }
 
   }, 
-  enabled: (data && getSimilar)
+  enabled: getSimilar
 });
+console.log(similar)
   return (
     <div className="flex min-h-screen items-center justify-center  font-sans dark:bg-black">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
@@ -49,6 +52,12 @@ const {data: similar} = useQuery({
         <Button onClick={() =>setGetCard(true)}>Get Random</Button>
         <MtgCard data={data?.card}/>
         <Button className={`${data ? '' : 'hidden'}`}onClick={() =>setGetSimilar(true)}>Get Similar</Button>
+        <div className="flex flex-wrap flex-row w-fit h-fit border-4 border-pink-600 max-h-fit max-w-fit">
+          {similar 
+          ? similar?.map((simCard) =>{return (
+          <div className="flex-col"><MtgCard data={simCard}/></div>)})
+          :<></>}
+        </div>
         </div>
         
       </main>
