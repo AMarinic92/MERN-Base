@@ -42,14 +42,14 @@ export default function CardSearchForm() {
     queryKey: ['fuzzy-card', deferredTerm],
     queryFn: async () => {
       const response = await API.get('/cards/fuzzy', {
-        params: { name: deferredTerm },
+        name: deferredTerm,
       });
       return response.data;
     },
     // Only run query if we have at least 2 characters
     enabled: deferredTerm.length >= 2,
   });
-
+  console.log(data);
   return (
     <div className="flex flex-col items-center w-full gap-8">
       <Form {...searchForm}>
@@ -76,7 +76,9 @@ export default function CardSearchForm() {
           <Loading />
         ) : (
           data?.map((card) => (
-            <MtgCard key={card.id || card.Name} data={card} />
+            <div key={card.id} className="flex-col">
+              <MtgCard key={card.id || card.Name} data={card} />
+            </div>
           ))
         )}
       </div>

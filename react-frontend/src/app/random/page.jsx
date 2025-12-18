@@ -21,6 +21,7 @@ export default function RandomCard() {
         name: currentCard?.Name,
         oracle_texts: currentCard?.OracleText?.split('\n') || [],
       };
+      console.debug(payload);
       return API.post('/cards/similar', payload);
     },
   });
@@ -74,7 +75,7 @@ export default function RandomCard() {
         {similar ? (
           similar?.map((simCard) => {
             return (
-              <div className="flex-col">
+              <div key={simCard.id || simCard.Name} className="flex-col">
                 <MtgCard isLoading={similarMutation.isPending} data={simCard} />
               </div>
             );

@@ -24,51 +24,60 @@ export default function MtgCard({ data, isLoading = false }) {
         : undefined;
     return image != undefined ? [image] : cardFacesUris;
   }, [data]);
-  return !isLoading && !!data ? (
+
+  if (isLoading) return <Loading />;
+  if (!data) return null;
+
+  return (
     <Dialog>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <div
-          className={`cursor-pointer flex flex-col items-center text-6xl p-3.5 m-3.5 gap-3.5`}
+          className="cursor-pointer flex flex-col items-center p-4 m-4 gap-4 border rounded-2xl hover:border-amber-500 transition-all bg-card"
+          /* Change max-w-xs (20rem) to max-w-sm (24rem) or a fixed pixel value like 400px */
+          style={{ width: '400px' }}
         >
-          {data?.Name}
-          {imageUri?.map((uri, i) => {
-            return (
-              <div key={data?.Name + i} className="mb-3">
-                <Image
-                  src={uri}
-                  width={500}
-                  height={500}
-                  preload={true}
-                  alt="Picture of the author"
-                />
-              </div>
-            );
-          })}
+          {/* Reduced text size from 6xl so the card remains the focus */}
+          <h3 className="text-2xl font-bold text-center line-clamp-1">
+            {data?.Name}
+          </h3>
+
+          {imageUri?.map((uri, i) => (
+            <div key={`${data.Name}-${i}`} className="w-full">
+              <Image
+                src={uri}
+                width={488}
+                height={680}
+                className="h-auto w-full rounded-[4.75%] shadow-2xl"
+                alt={data?.Name}
+                priority={true}
+              />
+            </div>
+          ))}
         </div>
       </DialogTrigger>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{data?.Name}</DialogTitle>
-          <DialogDescription>
-            {data?.OracleText}
-            {imageUri?.map((uri, i) => {
-              return (
-                <div key={data?.Name + i} className="mb-3">
+          <DialogDescription asChild>
+            <div className="flex flex-col gap-4">
+              <p className="text-sm italic">{data?.OracleText}</p>
+              {imageUri?.map((uri, i) => (
+                <div key={`${data.Name}-dialog-${i}`} className="w-full">
                   <Image
                     src={uri}
-                    width={500}
-                    height={500}
-                    preload={true}
-                    alt="Picture of the author"
+                    width={488}
+                    height={680}
+                    // Apply 'h-auto' here as well
+                    className="w-full h-auto rounded-[4.75%] shadow-xl"
+                    alt={data.Name}
                   />
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </DialogDescription>
         </DialogHeader>
       </DialogContent>
     </Dialog>
-  ) : (
-    isLoading && <Loading />
   );
 }

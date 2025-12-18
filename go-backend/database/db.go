@@ -138,7 +138,7 @@ func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
 			db := DB.Session(&gorm.Session{})
 			db.Exec("SELECT set_limit(0.9)")
 
-			result := db.Select("DISTINCT ON (name) Name", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost").
+			result := db.Select("DISTINCT ON (name) Name", "ID", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost").
 				Not("name = ?", name).
 				Where("lang = ?", "en").
 				Where("oracle_text % ?", searchVal).
