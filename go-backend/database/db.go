@@ -101,17 +101,25 @@ func SearchCardByName(name string) (*Card, error) {
 
 // SearchCardByNameFuzzy searches for cards with similar names (requires pg_trgm extension)
 func SearchCardByNameFuzzy(name string) ([]Card, error) {
-	var cards []Card
-	result := DB.Select("DISTINCT ON (name) Name", "ID", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost").
-		Where("name % ?", name).
-		Where("lang = 'en'").
-        Order(gorm.Expr("similarity(name, ?) DESC, name DESC", name)).
-        Limit(10).
-        Find(&cards)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return cards, nil
+    var cards []Card
+    
+    result := DB.Raw(`
+        SELECT c.name, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost
+        FROM cards c
+        INNER JOIN (
+            SELECT name, MAX(id) as id
+            FROM cards
+            WHERE name % ? AND lang = 'en' AND deleted_at IS NULL
+            GROUP BY name
+        ) as unique_cards ON c.name = unique_cards.name AND c.id = unique_cards.id
+        ORDER BY similarity(c.name, ?) DESC
+        LIMIT 10
+    `, name, name).Scan(&cards)
+    
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    return cards, nil
 }
 
 func GetRandomCard() (Card, error) {
@@ -121,53 +129,53 @@ func GetRandomCard() (Card, error) {
 }
 
 func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
-	var (
-		mu      sync.Mutex
-		wg      sync.WaitGroup
-		out     []Card
-		lastErr error
-	)
-
-	for _, val := range text {
-		wg.Add(1)
-		go func(searchVal string) {
-			defer wg.Done()
-
-			var cards []Card
-
-			// Each goroutine gets its own DB session
-			db := DB.Session(&gorm.Session{})
-			db.Exec("SELECT set_limit(0.9)")
-
-			result := db.Select("DISTINCT ON (name) Name", "ID", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost").
-				Not("name = ?", name).
-				Where("lang = ?", "en").
-				Where("oracle_text % ?", searchVal).
-				Order(gorm.Expr("name DESC, similarity(oracle_text, ?) DESC", searchVal)).
-				Limit(50).
-				Find(&cards)
-
-			mu.Lock()
-			defer mu.Unlock()
-
-			if result.Error != nil {
-				lastErr = result.Error
-				return
-			}
-
-			if len(cards) > 0 {
-				out = append(out, cards...)
-			}
-		}(val)
-	}
-
-	wg.Wait()
-
-	if len(out) == 0 && lastErr != nil {
-		return nil, lastErr
-	}
-
-	return out, nil
+    var (
+        mu      sync.Mutex
+        wg      sync.WaitGroup
+        out     []Card
+        lastErr error
+    )
+    for _, val := range text {
+        wg.Add(1)
+        go func(searchVal string) {
+            defer wg.Done()
+            var cards []Card
+            // Each goroutine gets its own DB session
+            db := DB.Session(&gorm.Session{})
+            db.Exec("SELECT set_limit(0.9)")
+            
+            result := db.Raw(`
+                SELECT c.name, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost
+                FROM cards c
+                INNER JOIN (
+                    SELECT name, MAX(id) as id
+                    FROM cards
+                    WHERE name != ? 
+                        AND lang = 'en' 
+                        AND oracle_text % ? 
+                        AND deleted_at IS NULL
+                    GROUP BY name
+                ) as unique_cards ON c.name = unique_cards.name AND c.id = unique_cards.id
+                ORDER BY similarity(c.oracle_text, ?) DESC
+                LIMIT 50
+            `, name, searchVal, searchVal).Scan(&cards)
+            
+            mu.Lock()
+            defer mu.Unlock()
+            if result.Error != nil {
+                lastErr = result.Error
+                return
+            }
+            if len(cards) > 0 {
+                out = append(out, cards...)
+            }
+        }(val)
+    }
+    wg.Wait()
+    if len(out) == 0 && lastErr != nil {
+        return nil, lastErr
+    }
+    return out, nil
 }
 
 // GetCardByID retrieves a card by its Scryfall ID

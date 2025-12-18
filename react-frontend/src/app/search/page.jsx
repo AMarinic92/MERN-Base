@@ -76,7 +76,7 @@ export default function CardSearchForm() {
           <Loading />
         ) : (
           data?.map((card) => (
-            <div key={card.id} className="flex-col">
+            <div key={card.id || card.name} className="flex-col">
               <MtgCard data={card} />
             </div>
           ))
