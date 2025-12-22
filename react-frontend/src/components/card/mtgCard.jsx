@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '../ui/button';
 import { useRouter } from 'next/navigation';
+import ManaCostDisplay from './manaCostDisplay';
+import OracleText from './oracleText';
 
 export default function MtgCard({ data, isLoading = false }) {
   const router = useRouter();
@@ -33,16 +35,6 @@ export default function MtgCard({ data, isLoading = false }) {
     router.push(`/cards/${data.ID}`);
   };
 
-  // if (isLoading)
-  //   return (
-  //     <div
-  //       className="cursor-pointer flex flex-col items-center p-4 m-4 gap-4 border rounded-2xl hover:border-amber-500 transition-all bg-card"
-  //       style={{ width: '400px' }}
-  //     >
-  //       <Loading />
-  //     </div>
-  //   );
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -51,9 +43,9 @@ export default function MtgCard({ data, isLoading = false }) {
           style={{ width: '400px' }}
         >
           {isLoading ? <Loading /> : null}
-          <h3 className="text-2xl font-bold text-center line-clamp-1">
+          <div className="flex flex-row text-2xl font-bold text-center line-clamp-1">
             {data?.Name}
-          </h3>
+          </div>
 
           {imageUri?.map((uri, i) => (
             <div key={`${data.ID}-${i}`} className="w-full">
@@ -72,12 +64,19 @@ export default function MtgCard({ data, isLoading = false }) {
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{data?.Name}</DialogTitle>
+          <DialogTitle>
+            <div className="flex flex-row gap-2 m-2 p-2 items-center justify-center">
+              {data?.Name}
+              <ManaCostDisplay manaCost={data?.ManaCost} />
+            </div>
+          </DialogTitle>
           <DialogDescription asChild>
-            <div className="flex flex-col gap-4">
-              <p className="text-sm italic">{data?.OracleText}</p>
+            <div className="flex flex-col gap-4 items-center justify-center">
               {imageUri?.map((uri, i) => (
-                <div key={`${data.ID}-dialog-${i}`} className="w-full">
+                <div
+                  key={`${data.ID}-dialog-${i}`}
+                  className="flex flex-col w-full gap-4"
+                >
                   <Image
                     src={uri}
                     width={488}
@@ -86,7 +85,10 @@ export default function MtgCard({ data, isLoading = false }) {
                     className="w-full h-auto rounded-[4.75%] shadow-xl"
                     alt={data.Name}
                   />
-                  <Button onClick={handleGoTo}>Go To Card Page</Button>
+                  <OracleText text={data?.OracleText} />
+                  <Button className="p-2 w-fit h-fit" onClick={handleGoTo}>
+                    Go To Card Page
+                  </Button>
                 </div>
               ))}
             </div>
