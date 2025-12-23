@@ -104,7 +104,7 @@ func SearchCardByNameFuzzy(name string) ([]Card, error) {
     var cards []Card
     
     result := DB.Raw(`
-        SELECT c.name, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost, c.cmc, c.type_line
+        SELECT c.name, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost, c.cmc, c.color_identity, c.type_line
         FROM cards c
         INNER JOIN (
             SELECT name, MAX(id) as id
@@ -145,7 +145,7 @@ func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
             db.Exec("SELECT set_limit(0.65)")
             
             result := db.Raw(`
-                SELECT c.name, c.type_line, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost, c.cmc
+                SELECT c.name, c.type_line, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.color_identity, c.mana_cost, c.cmc
                 FROM cards c
                 INNER JOIN (
                     SELECT name, MAX(id) as id
@@ -156,6 +156,7 @@ func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
                         AND deleted_at IS NULL
 						AND NOT type_line ILIKE '%Token%'
 						AND NOT type_line ILIKE '%Emblem%'
+						AND NOT type_line ILIKE 'Basic Land%'
                     GROUP BY name
                 ) as unique_cards ON c.name = unique_cards.name AND c.id = unique_cards.id
                 ORDER BY similarity(c.oracle_text, ?) DESC
@@ -183,7 +184,7 @@ func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
 // GetCardByID retrieves a card by its Scryfall ID
 func GetCardByID(id string) (*Card, error) {
 	var card Card
-	result := DB.Select("Name","TypeLine", "cmc", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost").Where("id = ?", id).First(&card)
+	result := DB.Select("Name","TypeLine", "cmc","Power","Toughness", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost", "ColorIdentity").Where("id = ?", id).First(&card)
 	if result.Error != nil {
 		return nil, result.Error
 	}

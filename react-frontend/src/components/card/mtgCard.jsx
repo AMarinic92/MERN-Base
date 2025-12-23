@@ -34,7 +34,7 @@ export default function MtgCard({ data, isLoading = false }) {
     if (!data?.ID) return;
     router.push(`/cards/${data.ID}`);
   };
-
+  if (!data) return <></>;
   return (
     <Dialog>
       <DialogTrigger asChild>

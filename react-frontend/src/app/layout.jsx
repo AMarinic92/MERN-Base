@@ -18,7 +18,7 @@ export default function Layout({ children }) {
                 <SidebarTrigger className="mt-4" />
                 <div className="text-9xl">Card Barrage</div>
               </div>
-              <div className="w-full p-4 ">{children}</div>
+              <div className="w-full p-4">{children}</div>
             </main>
           </SidebarProvider>
         </QueryClientProvider>

@@ -54,15 +54,20 @@ export default function CardPage({ params }) {
     return s[0] ?? '';
   });
 
+  const colorIdentity = cards?.reduce(
+    (acc, curr) => acc.concat(curr?.ColorIdentity),
+    [],
+  );
+  console.log('CI ', colorIdentity);
   if (!slug) return <div>No slug provided</div>;
   if (isLoading) return <Loading />;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <>
+    <div className="flex flex-col h-fit">
       {cards?.map((card, i) => {
         return (
-          <div key={`${card.ID}-${i}`} className="flex flex-row">
+          <div key={`${card.ID}-${i}`} className="flex flex-row w-fit">
             <div className="flex-col items-left p-4 m-4 gap-4 border rounded-2xl bg-card">
               <div
                 className="flex flex-col gap-4 items-center"
@@ -93,7 +98,16 @@ export default function CardPage({ params }) {
                 <ManaCostDisplay manaCost={card?.ManaCost} />
               </div>
               <div className="flex flex-col text-4xl min-w-fill items-left p-4 m-4 gap-4 border rounded-2xl bg-card whitespace-pre-line">
+                {card?.TypeLine}
+              </div>
+
+              <div className="flex flex-col text-4xl min-w-fill items-left p-4 m-4 gap-4 border rounded-2xl bg-card whitespace-pre-line">
                 <OracleText text={data?.OracleText} size="lg" />
+              </div>
+              <div
+                className={`${card?.Power && card?.Toughness ? '' : 'hidden'} flex flex-col text-4xl min-w-fill items-left p-4 m-4 gap-4 border rounded-2xl bg-card whitespace-pre-line`}
+              >
+                {`${card?.Power ?? 0}/${card?.Toughness ?? 0}`}
               </div>
             </div>
           </div>
@@ -103,7 +117,8 @@ export default function CardPage({ params }) {
         cards={similarMutation?.data}
         isLoading={isLoading || similarMutation.isPending}
         filterType={filterType}
+        colorIdentity={colorIdentity}
       />
-    </>
+    </div>
   );
 }

@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import MtgCard from '@/components/card/mtgCard';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Loading from '@/components/loading/loading';
 export default function Display({
   cards,
   isLoading = false,
   filterType = undefined,
+  colorIdentity = undefined,
 }) {
   const [sort, setSort] = useState('name');
   const [asc, setAsc] = useState(true);
@@ -18,7 +20,12 @@ export default function Display({
     for (const f of filter) {
       switch (f) {
         case 'mana':
-          // filter only same mana here
+          out = out.filter((c) => {
+            const ci = c.ColorIdentity;
+            return !colorIdentity?.length
+              ? !ci?.length
+              : ci?.length && ci?.every((i) => colorIdentity.includes(i));
+          });
           break;
         case 'type':
           out = out.filter((c) => {
@@ -59,11 +66,12 @@ export default function Display({
       setFilter(filter.filter((item) => item !== newFilter));
     }
   };
-  console.log(filter);
   return (
-    <>
+    <div
+      className={`${!displayCards?.length && !filter.length && !isLoading ? 'hidden' : ''}`}
+    >
       <div
-        className={`flex flex-row justify-evenly border rounded-2xl p-4 mb-2 gap-2 ${!displayCards?.length && !isLoading ? 'hidden' : ''}`}
+        className={`flex flex-row justify-evenly border bg-card rounded-t-2xl p-4 gap-2  `}
       >
         <div className="flex flex-row gap-2">
           <div className="text-xl">Sort: </div>
@@ -85,7 +93,7 @@ export default function Display({
               handleFilter({ newFilter: 'mana', add: !filter.includes('mana') })
             }
           >
-            Same Mana
+            Same Mana Identity
           </Button>
           {filterType ? (
             <Button
@@ -102,15 +110,13 @@ export default function Display({
           ) : null}
         </div>
       </div>
-      <ScrollArea className="border rounded-2xl bg-light w-full">
+      <ScrollArea className="border rounded-b-2xl bg-light w-full">
         <div
           className={`flex flex-wrap flex-row justify-center items-center max-h-[700px]`}
         >
-          {isLoading ? (
-            <div className="flex-col">
-              <MtgCard isLoading={true} />
-            </div>
-          ) : null}
+          <div className={`${isLoading ? 'flex-col' : 'hidden'}`}>
+            <Loading />
+          </div>
 
           {!!displayCards ? (
             displayCards?.map((c) => {
@@ -125,6 +131,6 @@ export default function Display({
           )}
         </div>
       </ScrollArea>
-    </>
+    </div>
   );
 }
