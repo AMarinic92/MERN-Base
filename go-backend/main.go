@@ -18,7 +18,7 @@ import (
 func main() {
 	// 1. Initialize the database connection and run migrations
 	database.InitializeDatabase(&models.Card{})
-
+	database.InitializeMemgraph()
 	// 2. Check if we should prime the database in the background
 	if len(os.Args) > 1 && os.Args[1] == "prime" {
 		filePath := "../../all-cards.json"
@@ -55,11 +55,11 @@ func main() {
 	router := mux.NewRouter()
 
 	// 4. Define the routes
-	router.HandleFunc("/api/cards/search", handlers.SearchCard).Methods("GET")
 	router.HandleFunc("/api/cards/rand", handlers.GetRndCard).Methods("GET")
 	router.HandleFunc("/api/cards/similar", handlers.GetSimilarCards).Methods("POST")
 	router.HandleFunc("/api/cards/fuzzy",handlers.GetFuzzyCard).Methods("GET")
 	router.HandleFunc("/api/cards/id",handlers.GetCardID).Methods("GET")
+	router.HandleFunc("/api/cards/mems", handlers.MemSuggest).Methods("POST")
 
 	router.PathPrefix("/").HandlerFunc(handlers.OptionsHandler).Methods("OPTIONS")
 
