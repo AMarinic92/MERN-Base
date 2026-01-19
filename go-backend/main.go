@@ -9,6 +9,7 @@ import (
 
 	"go-backend/database"
 	"go-backend/handlers"
+	"go-backend/models"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -16,7 +17,7 @@ import (
 
 func main() {
 	// 1. Initialize the database connection and run migrations
-	database.InitializeDatabase(&database.Card{})
+	database.InitializeDatabase(&models.Card{})
 
 	// 2. Check if we should prime the database in the background
 	if len(os.Args) > 1 && os.Args[1] == "prime" {

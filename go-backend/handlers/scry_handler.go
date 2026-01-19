@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-backend/database"
+	"go-backend/models"
 	"io"
 	"net/http"
 	"strconv"
@@ -176,8 +177,8 @@ func GetFuzzyCard(w http.ResponseWriter, r *http.Request){
 }
 
 // mapScryfallToCard converts Scryfall JSON to our Card model
-func mapScryfallToCard(data map[string]interface{}) *database.Card {
-	card := &database.Card{}
+func mapScryfallToCard(data map[string]interface{}) *models.Card {
+	card := &models.Card{}
 
 	// Required fields
 	if id, ok := data["id"].(string); ok {

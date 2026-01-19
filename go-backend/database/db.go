@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"go-backend/models"
 	"io"
 	"log"
 	"strings"
@@ -18,45 +19,6 @@ import (
 
 // DB holds the global database connection instance.
 var DB *gorm.DB
-
-// Card represents the MTG card model for GORM
-type Card struct {
-	ID        string         `gorm:"primaryKey;type:varchar(255)"`
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-
-	OracleID   *string  `gorm:"type:varchar(255)"`
-	Name       string   `gorm:"type:varchar(500);not null"`
-	ManaCost   *string  `gorm:"type:varchar(100)"`
-	CMC        *float64 `gorm:"type:decimal(10,2)"`
-	TypeLine   string   `gorm:"type:varchar(500);not null"`
-	OracleText *string  `gorm:"type:text"`
-	Power      *string  `gorm:"type:varchar(20)"`
-	Toughness  *string  `gorm:"type:varchar(20)"`
-	Loyalty    *string  `gorm:"type:varchar(20)"`
-
-	// Array fields - use pq.StringArray
-	Colors        pq.StringArray `gorm:"type:text[]"`
-	ColorIdentity pq.StringArray `gorm:"type:text[]"`
-	Keywords      pq.StringArray `gorm:"type:text[]"`
-
-	// JSON fields stored as text
-	CardFaces  *string `gorm:"type:jsonb"`
-	ImageURIs  *string `gorm:"type:jsonb"`
-	Legalities *string `gorm:"type:jsonb"`
-	Prices     *string `gorm:"type:jsonb"`
-
-	SetCode         string  `gorm:"type:varchar(50);not null"`
-	SetName         *string `gorm:"type:varchar(500)"`
-	CollectorNumber *string `gorm:"type:varchar(50)"`
-	Rarity          string  `gorm:"type:varchar(50);not null"`
-	Artist          *string `gorm:"type:varchar(500)"`
-	FlavorText      *string `gorm:"type:text"`
-	ReleasedAt      *string `gorm:"type:varchar(50)"`
-	Lang            string  `gorm:"type:varchar(10);default:''"`
-	CachedAt        int64   `gorm:"type:bigint;default:0"`
-}
 
 // InitializeDatabase connects to the PostgreSQL database and performs migrations.
 func InitializeDatabase(models ...interface{}) {
@@ -90,8 +52,8 @@ func GetDB() *gorm.DB {
 }
 
 // SearchCardByName searches for a card by exact name
-func SearchCardByName(name string) (*Card, error) {
-	var card Card
+func SearchCardByName(name string) (*models.Card, error) {
+	var card models.Card
 	result := DB.Where("name = ?", name).First(&card)
 	if result.Error != nil {
 		return nil, result.Error
@@ -100,8 +62,8 @@ func SearchCardByName(name string) (*Card, error) {
 }
 
 // SearchCardByNameFuzzy searches for cards with similar names (requires pg_trgm extension)
-func SearchCardByNameFuzzy(name string) ([]Card, error) {
-    var cards []Card
+func SearchCardByNameFuzzy(name string) ([]models.Card, error) {
+    var cards []models.Card
     
     result := DB.Raw(`
         SELECT c.name, c.id, c.image_uris, c.colors, c.card_faces, c.oracle_text, c.mana_cost, c.cmc, c.color_identity, c.type_line
@@ -122,24 +84,24 @@ func SearchCardByNameFuzzy(name string) ([]Card, error) {
     return cards, nil
 }
 
-func GetRandomCard() (Card, error) {
-	var card Card
+func GetRandomCard() (models.Card, error) {
+	var card models.Card
 	result := DB.Raw("SELECT * FROM cards TABLESAMPLE BERNOULLI(1) WHERE lang = 'en' LIMIT 1").Scan(&card)
 	return card, result.Error
 }
 
-func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
+func SearchFuzzyOracleText(name string, text []string) ([]models.Card, error) {
     var (
         mu      sync.Mutex
         wg      sync.WaitGroup
-        out     []Card
+        out     []models.Card
         lastErr error
     )
     for _, val := range text {
         wg.Add(1)
         go func(searchVal string) {
             defer wg.Done()
-            var cards []Card
+            var cards []models.Card
             // Each goroutine gets its own DB session
             db := DB.Session(&gorm.Session{})
             db.Exec("SELECT set_limit(0.65)")
@@ -182,8 +144,8 @@ func SearchFuzzyOracleText(name string, text []string) ([]Card, error) {
 }
 
 // GetCardByID retrieves a card by its Scryfall ID
-func GetCardByID(id string) (*Card, error) {
-	var card Card
+func GetCardByID(id string) (*models.Card, error) {
+	var card models.Card
 	result := DB.Select("Name","TypeLine", "cmc","Power","Toughness", "ImageURIs", "Colors", "CardFaces", "OracleText", "ManaCost", "ColorIdentity").Where("id = ?", id).First(&card)
 	if result.Error != nil {
 		return nil, result.Error
@@ -192,7 +154,7 @@ func GetCardByID(id string) (*Card, error) {
 }
 
 // UpsertCard inserts or updates a card (useful for caching Scryfall data)
-func UpsertCard(card *Card) error {
+func UpsertCard(card *models.Card) error {
 	result := DB.Save(card)
 	return result.Error
 }
@@ -207,7 +169,7 @@ func PrimeDatabase(file io.Reader) error {
 	}
 
 	const batchSize = 1000
-	var cards []*Card
+	var cards []*models.Card
 	var totalCount int
 	var batchCount int
 
@@ -260,7 +222,7 @@ func PrimeDatabase(file io.Reader) error {
 }
 
 // batchInsertCards inserts or updates a batch of cards using upsert
-func batchInsertCards(cards []*Card) error {
+func batchInsertCards(cards []*models.Card) error {
 	// Use Clauses with OnConflict to handle duplicates
 	// This will update existing records instead of failing
 	return DB.Clauses(clause.OnConflict{
@@ -276,9 +238,9 @@ func batchInsertCards(cards []*Card) error {
 	}).CreateInBatches(cards, len(cards)).Error
 }
 
-// mapScryfallToCard converts Scryfall JSON to Card model
-func mapScryfallToCard(data map[string]interface{}) *Card {
-	card := &Card{}
+// mapScryfallToCard converts Scryfall JSON to Card models
+func mapScryfallToCard(data map[string]interface{}) *models.Card {
+	card := &models.Card{}
 
 	// Required fields
 	if id, ok := data["id"].(string); ok {
