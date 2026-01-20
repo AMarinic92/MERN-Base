@@ -173,6 +173,24 @@ func GetCardByID(id string) (*models.Card, error) {
 	return &card, nil
 }
 
+func GetCardVariants(oracleID string, currentID string) ([]models.Card, error) {
+    var variants []models.Card
+    
+    result := DB.Select(
+        "id", "name", "type_line", "cmc", "power", "toughness", 
+        "image_uris", "colors", "card_faces", "oracle_text", 
+        "oracle_id", "mana_cost", "color_identity",
+    ).Where("oracle_id = ?", oracleID).
+      Where("id != ?", currentID).
+      Where("lang = ?", "en").
+      Find(&variants)
+
+    if result.Error != nil {
+        return nil, result.Error
+    }
+
+    return variants, nil
+}
 // UpsertCard inserts or updates a card (useful for caching Scryfall data)
 func UpsertCard(card *models.Card) error {
 	result := DB.Save(card)

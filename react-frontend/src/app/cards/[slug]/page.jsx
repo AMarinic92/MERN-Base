@@ -1,11 +1,16 @@
 'use client';
 
-import { use, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import API from '@/lib/api';
 import ManaCostDisplay from '@/components/card/manaCostDisplay';
 import Display from '@/components/card/display';
-
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import OracleText from '@/components/card/oracleText';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -13,6 +18,8 @@ import Loading from '@/components/loading/loading';
 
 export default function CardPage({ params }) {
   const { slug } = use(params); // Make sure slug is properly unwrapped
+  const [similar, setSimilar] = useState([]);
+  const [variants, setVariants] = useState([]);
   const { data, isLoading, error } = useQuery({
     queryKey: ['card-info', slug],
     queryFn: async () => {
@@ -33,12 +40,20 @@ export default function CardPage({ params }) {
       console.debug(payload);
       return await API.post('/cards/mems', payload);
     },
+    onSuccess: (data) => setSimilar(data),
   });
 
-  const handleGetSimilar = () => {
-    similarMutation.mutate(cards?.[0]);
-  };
-
+  const variantMutation = useMutation({
+    mutationFn: async (currentCard) => {
+      const payload = {
+        oracle_id: currentCard?.OracleID,
+        id: currentCard?.ID,
+      };
+      console.debug(payload);
+      return await API.post('/cards/variants', payload);
+    },
+    onSuccess: (data) => setVariants(data),
+  });
   const cards = useMemo(() => {
     if (!data) return undefined;
     const images = JSON.parse(data?.ImageURIs);
@@ -47,6 +62,12 @@ export default function CardPage({ params }) {
       : [{ ...data, ImageURIs: images }];
     return out;
   }, [data]);
+
+  useEffect(() => {
+    if (!cards) return;
+    variantMutation.mutate(cards?.[0]);
+    similarMutation.mutate(cards?.[0]);
+  }, [cards]);
 
   const filterType = cards?.map((c) => {
     const s = c.TypeLine.split(' — ');
@@ -60,6 +81,7 @@ export default function CardPage({ params }) {
   if (!slug) return <div>No slug provided</div>;
   if (isLoading) return <Loading />;
   if (error) return <div>Error: {error.message}</div>;
+  console.log(variantMutation?.data);
   return (
     <div className="flex flex-col h-fit">
       {cards?.map((card, i) => {
@@ -78,15 +100,6 @@ export default function CardPage({ params }) {
                   alt={card?.Name}
                   priority={true}
                 />
-                <Button
-                  className="max-w-24"
-                  onClick={handleGetSimilar}
-                  disabled={
-                    similarMutation?.data?.length || similarMutation.isPending
-                  }
-                >
-                  {similarMutation.isPending ? 'Finding...' : 'Get Similar'}
-                </Button>
               </div>
             </div>
             <div>
@@ -110,12 +123,34 @@ export default function CardPage({ params }) {
           </div>
         );
       })}
-      <Display
-        cards={similarMutation?.data}
-        isLoading={isLoading || similarMutation.isPending}
-        filterType={filterType}
-        colorIdentity={colorIdentity}
-      />
+      <Accordion type="multiple" collapsible>
+        <AccordionItem value="similar">
+          <AccordionTrigger className="text-2xl">
+            Similar Cards
+          </AccordionTrigger>
+          <AccordionContent>
+            <Display
+              cards={similarMutation?.data}
+              isLoading={isLoading || similarMutation.isPending}
+              filterType={filterType}
+              colorIdentity={colorIdentity}
+            />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="variants">
+          <AccordionTrigger className="text-2xl">
+            Card Variants
+          </AccordionTrigger>
+          <AccordionContent>
+            <Display
+              cards={variantMutation?.data}
+              isLoading={isLoading || variantMutation.isPending}
+              filterType={filterType}
+              colorIdentity={colorIdentity}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

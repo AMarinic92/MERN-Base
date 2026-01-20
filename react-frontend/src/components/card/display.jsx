@@ -30,7 +30,6 @@ export default function Display({
         case 'type':
           out = out.filter((c) => {
             const lt = c.TypeLine.split(' — ');
-            console.log(filterType.includes(lt[0]));
             return filterType.includes(lt[0]);
           });
           break;

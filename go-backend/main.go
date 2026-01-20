@@ -65,6 +65,8 @@ func main() {
 	router.HandleFunc("/api/cards/fuzzy",handlers.GetFuzzyCard).Methods("GET")
 	router.HandleFunc("/api/cards/id",handlers.GetCardID).Methods("GET")
 	router.HandleFunc("/api/cards/mems", handlers.MemSuggest).Methods("POST")
+	router.HandleFunc("/api/cards/variants", handlers.CardVariants).Methods("POST")
+
 
 	router.PathPrefix("/").HandlerFunc(handlers.OptionsHandler).Methods("OPTIONS")
 

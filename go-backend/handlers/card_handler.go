@@ -115,6 +115,40 @@ func MemSuggest(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(cards)
 }
 
+func CardVariants(w http.ResponseWriter, r *http.Request){
+		// Read the raw body
+	
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	// If you're expecting JSON, unmarshal it into a struct
+	var requestData struct {
+		OracleID        string   `json:"oracle_id"`
+		ID 				string 	 `json:"id"`
+	}
+
+	err = json.Unmarshal(body, &requestData)
+	if err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Use the data
+	cards, err := database.GetCardVariants(requestData.OracleID, requestData.ID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cards)
+}
+
 func GetFuzzyCard(w http.ResponseWriter, r *http.Request){
 	cardName := r.URL.Query().Get("name")
 	if cardName == "" {
