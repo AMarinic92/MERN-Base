@@ -12,10 +12,16 @@ import (
 	"go-backend/models"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
 func main() {
+	//load .env
+	err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
 	// 1. Initialize the database connection and run migrations
 	database. InitSystem(&models.Card{})
 	// 2. Check if we should prime the database in the background

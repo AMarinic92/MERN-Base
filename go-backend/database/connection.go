@@ -3,9 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"go-backend/config"
 	"log"
 	"strings"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,7 +18,23 @@ var DB *gorm.DB
 var GraphDriver neo4j.DriverWithContext
 
 func InitializeDatabase(models ...interface{}) {
-	dsn := "host=localhost user=appuser password=@s$Fuck1337! dbname=postgres port=5432 sslmode=disable search_path=public"
+	cfg := config.PGConfig{}
+    
+    // 1. Parse env variables into struct
+    if err := env.Parse(&cfg); err != nil {
+        log.Fatalf("Database: Failed to parse config: %v", err)
+    }
+
+    // 2. The DSN String Template
+    dsn := fmt.Sprintf(
+        "host=%s user=%s password=%s dbname=%s port=%d sslmode=%s search_path=public",
+        cfg.Host,
+        cfg.User,
+        cfg.Pass,
+        cfg.Name,
+        cfg.Port,
+        cfg.Ssl,
+    )
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -42,11 +60,15 @@ func InitializeDatabase(models ...interface{}) {
 }
 
 func InitializeMemgraph() {
-	uri := "bolt://localhost:7687" // Default Memgraph port
-	user := ""                     // Default is empty for local
-	password := ""
+	cfg := config.MGConfig{}
+    if err := env.Parse(&cfg); err != nil {
+        log.Fatalf("Memgraph: Failed to parse config: %v", err)
+    }
 
-	driver, err := neo4j.NewDriverWithContext(uri, neo4j.BasicAuth(user, password, ""))
+    // Construct the URI
+    uri := fmt.Sprintf("bolt://%s:%d", cfg.Host, cfg.Port)
+
+	driver, err := neo4j.NewDriverWithContext(uri, neo4j.BasicAuth(cfg.User, cfg.Pass, ""))
 	if err != nil {
 		log.Fatalf("Memgraph: Failed to create driver: %v", err)
 	}
